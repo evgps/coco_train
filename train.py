@@ -35,6 +35,13 @@ from engine import train_one_epoch, evaluate
 import presets
 import utils
 
+from torchvision.models.detection.mask_rcnn import MaskRCNN
+from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+
+def maskrcnn_resnext101_32x8d_fpn(num_classes=41, pretrained_backbone=True, trainable_backbone_layers=5, **kwargs):
+    backbone = resnet_fpn_backbone('resnext101_32x8d', pretrained_backbone, trainable_layers=trainable_backbone_layers)
+    model = MaskRCNN(backbone, num_classes, **kwargs)
+    return model
 
 def get_dataset(name, image_set, transform, data_path):
     paths = {
@@ -96,7 +103,10 @@ def main(args):
     if "rcnn" in args.model:
         if args.rpn_score_thresh is not None:
             kwargs["rpn_score_thresh"] = args.rpn_score_thresh
-    model = torchvision.models.detection.__dict__[args.model](num_classes=num_classes, pretrained=args.pretrained,
+    if args.model == 'maskrcnn_resnext101_32x8d_fpn':
+        model = maskrcnn_resnext101_32x8d_fpn(num_classes=num_classes, **kwargs)            
+    else:
+        model = torchvision.models.detection.__dict__[args.model](num_classes=num_classes, pretrained=args.pretrained,
                                                               **kwargs)
 
     model.to(device)
@@ -155,15 +165,15 @@ if __name__ == "__main__":
 
     parser.add_argument('--data-path', default='data/ytvos/all_frames', help='dataset')
     parser.add_argument('--dataset', default='ytvos', help='dataset')
-    parser.add_argument('--model', default='maskrcnn_resnet50_fpn', help='model')
+    parser.add_argument('--model', default='maskrcnn_resnext101_32x8d_fpn', help='model maskrcnn_resnet50_fpn')
     parser.add_argument('--device', default='cuda', help='device')
-    parser.add_argument('-b', '--batch-size', default=2, type=int,
+    parser.add_argument('-b', '--batch-size', default=8, type=int,
                         help='images per gpu, the total batch size is $NGPU x batch_size')
     parser.add_argument('--epochs', default=26, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')
-    parser.add_argument('--lr', default=0.002, type=float,
+    parser.add_argument('--lr', default=0.02, type=float,
                         help='initial learning rate, 0.02 is the default value for training '
                         'on 8 gpus and 2 images_per_gpu')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -175,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr-steps', default=[16, 22], nargs='+', type=int, help='decrease lr every step-size epochs')
     parser.add_argument('--lr-gamma', default=0.1, type=float, help='decrease lr by a factor of lr-gamma')
     parser.add_argument('--print-freq', default=20, type=int, help='print frequency')
-    parser.add_argument('--output-dir', default='.', help='path where to save')
+    parser.add_argument('--output-dir', default='weights/', help='path where to save')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, help='start epoch')
     parser.add_argument('--aspect-ratio-group-factor', default=3, type=int)

@@ -252,11 +252,10 @@ def get_coco_kp(root, image_set, transforms):
     return get_coco(root, image_set, transforms, mode="person_keypoints")
 
 
-def get_ytvos_v4(root, image_set, transforms, mode='instances'):
-    anno_file_template = "{}_{}2017.json"
+def get_ytvos(root, image_set, transforms, mode='instances'):
     PATHS = {
-        "train": ("train/JPEGImages/", "annotations/instances_nano_val_sub_coco.json"),
-        "val": ("train/JPEGImages/", "annotations/instances_nano_val_sub_coco.json"),
+        "train": ("train/JPEGImages/", "annotations/instances_train_coco.json"),
+        "val": ("train/JPEGImages/", "annotations/instances_val_coco.json"),
         # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
     }
 

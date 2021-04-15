@@ -22,15 +22,17 @@ import os
 import time
 
 import torch
+import torch.nn as nn
 import torch.utils.data
 import torchvision
 import torchvision.models.detection
 import torchvision.models.detection.mask_rcnn
 
-from coco_utils import get_coco, get_coco_kp, get_ytvos_v4
+from coco_utils import get_coco, get_coco_kp, get_ytvos
 
 from group_by_aspect_ratio import GroupedBatchSampler, create_aspect_ratio_groups
 from engine import train_one_epoch, evaluate
+from torchvision.ops.misc import FrozenBatchNorm2d
 
 import presets
 import utils
@@ -47,7 +49,7 @@ def get_dataset(name, image_set, transform, data_path):
     paths = {
         "coco": (data_path, get_coco, 91),
         "coco_kp": (data_path, get_coco_kp, 2),
-        "ytvos": (data_path, get_ytvos_v4, 41)
+        "ytvos": (data_path, get_ytvos, 41)
     }
     p, ds_fn, num_classes = paths[name]
 
@@ -104,7 +106,11 @@ def main(args):
         if args.rpn_score_thresh is not None:
             kwargs["rpn_score_thresh"] = args.rpn_score_thresh
     if args.model == 'maskrcnn_resnext101_32x8d_fpn':
-        model = maskrcnn_resnext101_32x8d_fpn(num_classes=num_classes, **kwargs)            
+        model = maskrcnn_resnext101_32x8d_fpn(num_classes=num_classes, **kwargs)  
+        for module in model.modules():
+            if isinstance(module, FrozenBatchNorm2d):
+                module.eps = 0.0          
+        nn.utils.clip_grad_value_(model.parameters(), 0.99)
     else:
         model = torchvision.models.detection.__dict__[args.model](num_classes=num_classes, pretrained=args.pretrained,
                                                               **kwargs)
@@ -167,13 +173,13 @@ if __name__ == "__main__":
     parser.add_argument('--dataset', default='ytvos', help='dataset')
     parser.add_argument('--model', default='maskrcnn_resnext101_32x8d_fpn', help='model maskrcnn_resnet50_fpn')
     parser.add_argument('--device', default='cuda', help='device')
-    parser.add_argument('-b', '--batch-size', default=8, type=int,
+    parser.add_argument('-b', '--batch-size', default=2, type=int,
                         help='images per gpu, the total batch size is $NGPU x batch_size')
     parser.add_argument('--epochs', default=26, type=int, metavar='N',
                         help='number of total epochs to run')
     parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
                         help='number of data loading workers (default: 4)')
-    parser.add_argument('--lr', default=0.02, type=float,
+    parser.add_argument('--lr', default=0.0002, type=float,
                         help='initial learning rate, 0.02 is the default value for training '
                         'on 8 gpus and 2 images_per_gpu')
     parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
@@ -208,7 +214,7 @@ if __name__ == "__main__":
     # distributed training parameters
     parser.add_argument('--world-size', default=1, type=int,
                         help='number of distributed processes')
-    parser.add_argument('--dist-url', default='tcp://127.0.0.1:8822', help='url used to set up distributed training')
+    parser.add_argument('--dist-url', default='tcp://0.0.0.0:8822', help='url used to set up distributed training')
 
     args = parser.parse_args()
 

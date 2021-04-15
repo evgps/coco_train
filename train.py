@@ -214,7 +214,7 @@ if __name__ == "__main__":
     # distributed training parameters
     parser.add_argument('--world-size', default=1, type=int,
                         help='number of distributed processes')
-    parser.add_argument('--dist-url', default='tcp://0.0.0.0:8822', help='url used to set up distributed training')
+    parser.add_argument('--dist-url', default='tcp://127.0.0.1:8822', help='url used to set up distributed training')
 
     args = parser.parse_args()
 

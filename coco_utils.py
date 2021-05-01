@@ -221,10 +221,10 @@ class CocoDetection(torchvision.datasets.CocoDetection):
 
 
 def get_coco(root, image_set, transforms, mode='instances'):
-    anno_file_template = "{}_{}2017.json"
+    anno_file_template = "{}_{}2014.json"
     PATHS = {
-        "train": ("train2017", os.path.join("annotations", anno_file_template.format(mode, "train"))),
-        "val": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val"))),
+        "train": ("train2014", os.path.join("annotations", anno_file_template.format(mode, "train"))),
+        "val": ("val2014", os.path.join("annotations", anno_file_template.format(mode, "val"))),
         # "train": ("val2017", os.path.join("annotations", anno_file_template.format(mode, "val")))
     }
 

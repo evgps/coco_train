@@ -98,10 +98,18 @@ def main(args):
         collate_fn=utils.collate_fn)
 
     print("Creating model")
-    kwargs = {
-        "trainable_backbone_layers": args.trainable_backbone_layers,
-        "pretrained_backbone": True
-    }
+    if not args.size is None:
+        kwargs = {
+            "trainable_backbone_layers": args.trainable_backbone_layers,
+            "pretrained_backbone": True,
+            "min_size": args.size,
+            "max_size": args.size
+        }
+    else:
+        kwargs = {
+            "trainable_backbone_layers": args.trainable_backbone_layers,
+            "pretrained_backbone": True
+        }
     if "rcnn" in args.model:
         if args.rpn_score_thresh is not None:
             kwargs["rpn_score_thresh"] = args.rpn_score_thresh
@@ -191,6 +199,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr-steps', default=[16, 22], nargs='+', type=int, help='decrease lr every step-size epochs')
     parser.add_argument('--lr-gamma', default=0.1, type=float, help='decrease lr by a factor of lr-gamma')
     parser.add_argument('--print-freq', default=20, type=int, help='print frequency')
+    parser.add_argument('--size', default=None, type=int, help='Image size')
     parser.add_argument('--output-dir', default='weights/', help='path where to save')
     parser.add_argument('--resume', default='', help='resume from checkpoint')
     parser.add_argument('--start_epoch', default=0, type=int, help='start epoch')
